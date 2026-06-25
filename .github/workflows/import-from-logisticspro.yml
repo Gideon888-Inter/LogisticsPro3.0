@@ -1,0 +1,45 @@
+name: Import from logisticspro
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/import-from-logisticspro.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout LogisticsPro3.0
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone source repository
+        run: |
+          set -e
+          rm -rf /tmp/logisticspro-source
+          git clone --depth 1 https://github.com/Gideon888-Inter/logisticspro.git /tmp/logisticspro-source
+
+      - name: Replace repository contents
+        run: |
+          set -e
+          find . -mindepth 1 \
+            ! -name .git \
+            ! -path './.git/*' \
+            -exec rm -rf {} +
+          cp -a /tmp/logisticspro-source/. .
+          rm -rf .git
+          rm -rf .github/workflows/import-from-logisticspro.yml
+
+      - name: Commit imported project
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Import project from logisticspro repository" || echo "No changes to commit"
+          git push origin main
